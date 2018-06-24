@@ -21,9 +21,23 @@
 #  THE SOFTWARE.
 
 FROM jenkins/slave:3.19-1
-MAINTAINER Oleg Nenashev <o.v.nenashev@gmail.com>
+MAINTAINER Harry Rong <harryrong@ruishanio.com>
 LABEL Description="This is a base image, which allows connecting Jenkins agents via JNLP protocols" Vendor="Jenkins project" Version="3.19"
 
 COPY jenkins-slave /usr/local/bin/jenkins-slave
+
+USER root
+#清除了基础镜像设置的源，切换成阿里云的jessie源
+RUN echo '' > /etc/apt/sources.list.d/jessie-backports.list \
+  && echo "deb http://mirrors.aliyun.com/debian jessie main contrib non-free" > /etc/apt/sources.list \
+  && echo "deb http://mirrors.aliyun.com/debian jessie-updates main contrib non-free" >> /etc/apt/sources.list \
+  && echo "deb http://mirrors.aliyun.com/debian-security jessie/updates main contrib non-free" >> /etc/apt/sources.list
+#更新源并安装缺少的包
+RUN apt-get update && apt-get install -y libltdl7
+
+ARG dockerGid=999
+
+RUN echo "docker:x:${dockerGid}:jenkins" >> /etc/group \
+USER jenkins
 
 ENTRYPOINT ["jenkins-slave"]
